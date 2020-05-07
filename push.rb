@@ -17,12 +17,25 @@
 require "base64"
 require "jwt"
  
-Development_server = "https://api.sandbox.push.apple.com:443" # for debug build
-Production_server = "https://api.push.apple.com:443" # for production and beta build?
+DEVELOPMENT_SERVER = "https://api.sandbox.push.apple.com:443" # for debug build
+PRODUCTION_SERVER = "https://api.push.apple.com:443" # for production and beta build?
 
 ISSUER_ID = "79JA83N72Y" # team id
 KEY_ID = "W63FF2S49Z" # https://developer.apple.com/account/resources/authkeys/list
-DEVICE_TOKEN = "06e01c740888a3a24c6df8003f1f55b38dff70f0a3cec559c2206bce537365df" # might change periodically
+
+build = "Beta" # Alpha / Beta
+
+if build == "Alpha"
+  APNS_TOPIC = "au.com.ninemsn.jump-in-Alpha"
+  DEVICE_TOKEN = "06e01c740888a3a24c6df8003f1f55b38dff70f0a3cec559c2206bce537365df" # for au.com.ninemsn.jump-in-Alpha, might change periodically
+  APNS_SERVER = DEVELOPMENT_SERVER
+
+elsif build == "Beta"
+  APNS_TOPIC =  "au.com.ninemsn.jump-in-Beta"
+  DEVICE_TOKEN = "3bb30da7af208778ba9264bd0a361be0f64b29b7c361be8a81fddb105390c255" # for au.com.ninemsn.jump-in-Beta, might change periodically
+  APNS_SERVER = PRODUCTION_SERVER
+
+end
  
 private_key = OpenSSL::PKey.read(File.read("./AuthKey_#{KEY_ID}.p8")) # private key generated when creating new key
  
@@ -56,10 +69,17 @@ payload = '\'{
 
 curl = 'curl -v \
      -d %s \
-     -H "apns-topic: au.com.ninemsn.jump-in-Alpha" \
+     -H "apns-topic: %s" \
      -H "authorization: bearer %s" \
      --http2 \
-     %s/3/device/%s' %[payload, token, Development_server, DEVICE_TOKEN]
+     %s/3/device/%s' %[payload, APNS_TOPIC, token, APNS_SERVER, DEVICE_TOKEN]
+
+# curl = 'curl -v \
+#      -d %s \
+#      -H "apns-topic: au.com.ninemsn.jump-in-Alpha" \
+#      --http2 \
+#      --cert ./beta-Certificates.p12 \
+#      %s/3/device/%s' %[payload, Development_server, DEVICE_TOKEN]
 
 # puts curl
 
